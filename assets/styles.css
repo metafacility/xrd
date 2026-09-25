@@ -673,6 +673,92 @@ details.accordion > summary::-webkit-details-marker { display: none; }
   margin-top: 8px;
 }
 
+/* ---------- Public announcement banner ---------- */
+.site-notice {
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+}
+.site-notice.info {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+.site-notice.warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+.site-notice.success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+/* ---------- Admin panel ---------- */
+.admin-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 20px;
+}
+.admin-note {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font-size: 0.92rem;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+.admin-form label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-slot-row {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+  background: var(--color-bg);
+}
+.admin-slot-date {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.admin-status {
+  font-size: 0.85rem;
+  margin-top: 10px;
+  color: var(--color-success);
+}
+.admin-status.error {
+  color: var(--color-danger);
+}
+
 /* ---------- Footer ---------- */
 .site-footer {
   background: var(--color-surface);

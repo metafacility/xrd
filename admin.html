@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel – XRD Facility</title>
+  <meta name="description" content="Admin panel for managing XRD slots, notifications, and basic site settings." />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/main.js"></script>
+</head>
+<body id="admin-page">
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <nav class="site-nav" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">⚛ XRD Facility</a>
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="booking.html">Booking</a></li>
+        <li><a href="learn.html">Learn</a></li>
+        <li><a href="data.html">Data Interpretation</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="admin.html">Admin</a></li>
+      </ul>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
+        <span class="icon" aria-hidden="true">🌙</span>
+        <span class="label">Dark mode</span>
+      </button>
+      <button class="nav-hamburger" id="nav-hamburger" aria-controls="nav-links" aria-expanded="false" aria-label="Open navigation menu">☰</button>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <h1>Admin Panel</h1>
+    <p>Manage slots, notifications, and site content (frontend foundation).</p>
+  </header>
+
+  <main id="main-content" class="page-main">
+    <section class="section" id="admin-login-section">
+      <h2 class="section-title">Admin Login</h2>
+      <p class="section-subtitle">Use the temporary local password to unlock admin controls on this browser.</p>
+      <div class="admin-card">
+        <p class="admin-note">This is a static-site foundation. Login is browser-only and not production secure.</p>
+        <form id="admin-login-form" class="admin-form">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" required autocomplete="current-password" placeholder="Enter admin password" />
+          <button type="submit" class="btn btn-action">Login</button>
+        </form>
+        <p id="admin-login-status" class="admin-status" role="alert" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="section" id="admin-panel-section" hidden>
+      <h2 class="section-title">Management</h2>
+      <p class="section-subtitle">Changes are saved to localStorage and applied immediately on this browser.</p>
+
+      <div class="admin-card">
+        <h3>Schedule &amp; Slot Availability</h3>
+        <form id="admin-slot-form" class="admin-form">
+          <div id="admin-slots-container"></div>
+          <button type="submit" class="btn btn-action">Save slot settings</button>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <h3>Public Notifications</h3>
+        <form id="admin-announcement-form" class="admin-form">
+          <label for="announcement-message">Notification message</label>
+          <textarea id="announcement-message" rows="3" placeholder="e.g., XRD results are out. Fill payment details to download your report."></textarea>
+
+          <label for="announcement-type">Notification type</label>
+          <select id="announcement-type">
+            <option value="info">Info</option>
+            <option value="warning">Warning</option>
+            <option value="success">Success</option>
+          </select>
+
+          <div class="admin-actions">
+            <button type="submit" class="btn btn-action">Save notification</button>
+            <button type="button" class="btn btn-disabled" id="clear-announcement-btn">Clear notification</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <h3>Site Customization</h3>
+        <form id="admin-settings-form" class="admin-form">
+          <label for="setting-facility-name">Facility name</label>
+          <input type="text" id="setting-facility-name" placeholder="XRD Facility" />
+
+          <label for="setting-logo-mark">Logo mark / emoji</label>
+          <input type="text" id="setting-logo-mark" placeholder="⚛" maxlength="8" />
+
+          <label for="setting-home-title">Homepage hero title</label>
+          <input type="text" id="setting-home-title" />
+
+          <label for="setting-home-subtitle">Homepage hero subtitle</label>
+          <textarea id="setting-home-subtitle" rows="3"></textarea>
+
+          <label for="setting-contact-email">Contact email</label>
+          <input type="email" id="setting-contact-email" />
+
+          <label for="setting-contact-phone">Contact phone</label>
+          <input type="text" id="setting-contact-phone" />
+
+          <label for="setting-contact-location">Contact location summary</label>
+          <input type="text" id="setting-contact-location" />
+
+          <button type="submit" class="btn btn-action">Save site settings</button>
+        </form>
+      </div>
+
+      <p id="admin-save-status" class="admin-status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="footer-year"></span> <span data-site-name>XRD Facility</span>. All rights reserved. &nbsp;|&nbsp;
+      <a href="index.html">Home</a> &nbsp;|&nbsp;
+      <a href="booking.html">Book a Slot</a>
+    </p>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+  </footer>
+
+</body>
+</html>

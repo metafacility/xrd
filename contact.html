@@ -22,6 +22,7 @@
         <li><a href="learn.html">Learn</a></li>
         <li><a href="data.html">Data Interpretation</a></li>
         <li><a href="contact.html">Contact</a></li>
+        <li><a href="admin.html">Admin</a></li>
       </ul>
       <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
         <span class="icon" aria-hidden="true">🌙</span>
@@ -54,17 +55,17 @@
               <dd>X-Ray Diffractometer (XRD) Facility</dd>
 
               <dt>Location</dt>
-              <dd>Department of [Department Name]<br />
+              <dd id="contact-location-text">Department of [Department Name]<br />
                   [Building Name], Room [Room No.]<br />
                   [Institution Name]<br />
                   [City, State – PIN Code]
               </dd>
 
               <dt>Email</dt>
-              <dd><a href="mailto:xrd-facility@institution.ac.in">xrd-facility@institution.ac.in</a></dd>
+              <dd><a id="contact-email-link" href="mailto:xrd-facility@institution.ac.in">xrd-facility@institution.ac.in</a></dd>
 
               <dt>Phone</dt>
-              <dd>+91 [Phone Number]</dd>
+              <dd id="contact-phone-text">+91 [Phone Number]</dd>
             </dl>
           </div>
 
@@ -165,7 +166,7 @@
 
   <!-- Footer -->
   <footer class="site-footer">
-    <p>© <span id="footer-year"></span> XRD Facility. All rights reserved. &nbsp;|&nbsp;
+    <p>© <span id="footer-year"></span> <span data-site-name>XRD Facility</span>. All rights reserved. &nbsp;|&nbsp;
       <a href="booking.html">Book a Slot</a> &nbsp;|&nbsp;
       <a href="index.html">Home</a>
     </p>
@@ -190,7 +191,11 @@
       }
 
       var body = 'Name: ' + name + '\nEmail: ' + email + '\nInstitution: ' + institution + '\n\n' + message;
-      var mailtoLink = 'mailto:xrd-facility@institution.ac.in'
+      var targetEmail = (window.__xrdSiteSettings && window.__xrdSiteSettings.contactEmail)
+        ? window.__xrdSiteSettings.contactEmail
+        : 'xrd-facility@institution.ac.in';
+
+      var mailtoLink = 'mailto:' + targetEmail
         + '?subject=' + encodeURIComponent('[XRD Website] ' + subject)
         + '&body=' + encodeURIComponent(body);
 

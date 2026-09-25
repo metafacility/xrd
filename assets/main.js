@@ -1,7 +1,10 @@
 /* ============================================================
    XRD Facility – Shared JavaScript
    - Light/Dark theme toggle with localStorage persistence
+   - Public notification banner rendering
+   - Site customization rendering from admin settings
    - Booking availability rendering (next two Wednesdays)
+   - Admin panel (localStorage-backed foundation)
    ============================================================ */
 
 // ── Theme toggle ──────────────────────────────────────────────
@@ -48,6 +51,118 @@
   });
 })();
 
+var STORAGE_KEYS = {
+  slotConfig: 'xrd-slot-config',
+  siteSettings: 'xrd-site-settings',
+  announcement: 'xrd-announcement'
+};
+
+var DEFAULT_SITE_SETTINGS = {
+  facilityName: 'XRD Facility',
+  logoMark: '⚛',
+  contactEmail: 'xrd-facility@institution.ac.in',
+  contactPhone: '+91 [Phone Number]',
+  contactLocation: 'Department of [Department Name], [Institution Name]',
+  homeHeroTitle: 'X-Ray Diffractometer (XRD) Facility',
+  homeHeroSubtitle: 'A shared analytical facility providing high-quality powder X-ray diffraction services for research and industry.'
+};
+
+function readJSON(key, fallback) {
+  try {
+    var raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    var parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function writeJSON(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function isSafeHttpUrl(url) {
+  try {
+    var parsed = new URL(url, window.location.origin);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch (e) {
+    return false;
+  }
+}
+
+function getSiteSettings() {
+  var saved = readJSON(STORAGE_KEYS.siteSettings, {});
+  return Object.assign({}, DEFAULT_SITE_SETTINGS, saved);
+}
+
+function applySiteSettings() {
+  var settings = getSiteSettings();
+  window.__xrdSiteSettings = settings;
+
+  document.querySelectorAll('.nav-brand').forEach(function (el) {
+    el.textContent = (settings.logoMark ? settings.logoMark + ' ' : '') + settings.facilityName;
+  });
+
+  document.querySelectorAll('[data-site-name]').forEach(function (el) {
+    el.textContent = settings.facilityName;
+  });
+
+  var heroTitle = document.getElementById('hero-title');
+  if (heroTitle && settings.homeHeroTitle) heroTitle.textContent = settings.homeHeroTitle;
+
+  var heroSubtitle = document.getElementById('hero-subtitle');
+  if (heroSubtitle && settings.homeHeroSubtitle) heroSubtitle.textContent = settings.homeHeroSubtitle;
+
+  var contactEmailLink = document.getElementById('contact-email-link');
+  if (contactEmailLink && settings.contactEmail) {
+    contactEmailLink.textContent = settings.contactEmail;
+    contactEmailLink.href = 'mailto:' + settings.contactEmail;
+  }
+
+  var contactPhoneText = document.getElementById('contact-phone-text');
+  if (contactPhoneText && settings.contactPhone) contactPhoneText.textContent = settings.contactPhone;
+
+  var contactLocationText = document.getElementById('contact-location-text');
+  if (contactLocationText && settings.contactLocation) contactLocationText.textContent = settings.contactLocation;
+}
+
+function getAnnouncement() {
+  var saved = readJSON(STORAGE_KEYS.announcement, {});
+  if (!saved || typeof saved.message !== 'string' || !saved.message.trim()) return null;
+  var type = saved.type === 'success' || saved.type === 'warning' ? saved.type : 'info';
+  return {
+    type: type,
+    message: saved.message.trim()
+  };
+}
+
+function renderAnnouncementBanner() {
+  var announcement = getAnnouncement();
+  if (!announcement) return;
+  var nav = document.querySelector('.site-nav');
+  if (!nav || document.querySelector('.site-notice')) return;
+
+  var banner = document.createElement('div');
+  banner.className = 'site-notice ' + announcement.type;
+  banner.setAttribute('role', 'status');
+  banner.setAttribute('aria-live', 'polite');
+  banner.textContent = announcement.message;
+
+  if (nav.parentNode) {
+    nav.parentNode.insertBefore(banner, nav.nextSibling);
+  }
+}
+
 // ── Mobile navigation hamburger ───────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
   const hamburger = document.getElementById('nav-hamburger');
@@ -68,6 +183,10 @@ document.addEventListener('DOMContentLoaded', function () {
       link.setAttribute('aria-current', 'page');
     }
   });
+
+  applySiteSettings();
+  renderAnnouncementBanner();
+  initAdminPanel();
 });
 
 // ── Booking availability ───────────────────────────────────────
@@ -123,8 +242,12 @@ function slotColor(remaining) {
   return 'red';
 }
 
+function getMergedSlotConfig() {
+  return Object.assign({}, SLOT_CONFIG, readJSON(STORAGE_KEYS.slotConfig, {}));
+}
+
 function getSlotDetails(dateStr) {
-  var config = SLOT_CONFIG[dateStr];
+  var config = getMergedSlotConfig()[dateStr];
   var remaining = MAX_SLOTS;
   var bookingUrl = MS_FORMS_LINK;
   var note = '';
@@ -138,7 +261,7 @@ function getSlotDetails(dateStr) {
   }
 
   remaining = Math.max(0, Math.min(MAX_SLOTS, remaining));
-  var hasValidFormLink = bookingUrl && bookingUrl.indexOf('your-form-link') === -1;
+  var hasValidFormLink = bookingUrl && bookingUrl.indexOf('your-form-link') === -1 && isSafeHttpUrl(bookingUrl);
   var bookingOpen = remaining > 0 && hasValidFormLink;
 
   return {
@@ -193,10 +316,10 @@ function renderAvailability() {
     html += '  <div class="slot-bar-track"><div class="slot-bar-fill ' + color + '" style="width:' + pct + '%" role="progressbar" aria-valuenow="' + remaining + '" aria-valuemin="0" aria-valuemax="' + MAX_SLOTS + '"></div></div>';
     html += '  <div class="slot-count">' + remaining + ' of ' + MAX_SLOTS + ' slots remaining</div>';
     if (slot.note) {
-      html += '  <div class="slot-note">' + slot.note + '</div>';
+      html += '  <div class="slot-note">' + escapeHtml(slot.note) + '</div>';
     }
     if (slot.bookingOpen) {
-      html += '  <a href="' + slot.bookingUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-action btn-sm">Book now →</a>';
+      html += '  <a href="' + escapeHtml(slot.bookingUrl) + '" target="_blank" rel="noopener noreferrer" class="btn btn-action btn-sm">Book now →</a>';
     } else {
       html += '  <span class="btn btn-disabled btn-sm" aria-disabled="true">Booking closed</span>';
     }
@@ -204,6 +327,180 @@ function renderAvailability() {
   });
 
   container.innerHTML = html;
+}
+
+function initAdminPanel() {
+  var page = document.getElementById('admin-page');
+  if (!page) return;
+
+  var SESSION_KEY = 'xrd-admin-authenticated';
+  var ADMIN_PASSWORD = 'change-me-admin-password';
+
+  var loginSection = document.getElementById('admin-login-section');
+  var panelSection = document.getElementById('admin-panel-section');
+  var loginForm = document.getElementById('admin-login-form');
+  var loginStatus = document.getElementById('admin-login-status');
+  var saveStatus = document.getElementById('admin-save-status');
+  var slotsContainer = document.getElementById('admin-slots-container');
+  var slotForm = document.getElementById('admin-slot-form');
+  var settingsForm = document.getElementById('admin-settings-form');
+  var announcementForm = document.getElementById('admin-announcement-form');
+  var clearAnnouncementBtn = document.getElementById('clear-announcement-btn');
+
+  var slotDates = getNextWednesdays(4);
+
+  function setAuthedUI(isAuthed) {
+    loginSection.hidden = isAuthed;
+    panelSection.hidden = !isAuthed;
+  }
+
+  function isAuthed() {
+    return sessionStorage.getItem(SESSION_KEY) === '1';
+  }
+
+  function renderSlotInputs() {
+    var mergedConfig = getMergedSlotConfig();
+    var html = '';
+
+    slotDates.forEach(function (dateStr) {
+      var config = mergedConfig[dateStr];
+      var remaining = '';
+      var note = '';
+      var bookingUrl = '';
+
+      if (typeof config === 'number') {
+        remaining = config;
+      } else if (config && typeof config === 'object') {
+        if (typeof config.remaining === 'number') remaining = config.remaining;
+        if (typeof config.note === 'string') note = config.note;
+        if (typeof config.bookingUrl === 'string') bookingUrl = config.bookingUrl;
+      }
+
+      html += '<div class="admin-slot-row">';
+      html += '  <div class="admin-slot-date">' + formatDate(dateStr) + '</div>';
+      html += '  <label>Remaining slots (0-' + MAX_SLOTS + ')<input type="number" min="0" max="' + MAX_SLOTS + '" data-field="remaining" data-date="' + dateStr + '" value="' + escapeHtml(remaining) + '" /></label>';
+      html += '  <label>Per-date booking link (optional)<input type="url" data-field="bookingUrl" data-date="' + dateStr + '" value="' + escapeHtml(bookingUrl) + '" placeholder="https://forms.office.com/..." /></label>';
+      html += '  <label>Note (optional)<input type="text" data-field="note" data-date="' + dateStr + '" value="' + escapeHtml(note) + '" placeholder="Fully booked / Rescheduled" /></label>';
+      html += '</div>';
+    });
+
+    slotsContainer.innerHTML = html;
+  }
+
+  function loadSettingsForms() {
+    var settings = getSiteSettings();
+    document.getElementById('setting-facility-name').value = settings.facilityName;
+    document.getElementById('setting-logo-mark').value = settings.logoMark;
+    document.getElementById('setting-contact-email').value = settings.contactEmail;
+    document.getElementById('setting-contact-phone').value = settings.contactPhone;
+    document.getElementById('setting-contact-location').value = settings.contactLocation;
+    document.getElementById('setting-home-title').value = settings.homeHeroTitle;
+    document.getElementById('setting-home-subtitle').value = settings.homeHeroSubtitle;
+
+    var announcement = getAnnouncement();
+    document.getElementById('announcement-message').value = announcement ? announcement.message : '';
+    document.getElementById('announcement-type').value = announcement ? announcement.type : 'info';
+  }
+
+  function setSaveStatus(message, type) {
+    saveStatus.textContent = message;
+    saveStatus.className = 'admin-status ' + (type || 'success');
+  }
+
+  if (isAuthed()) {
+    setAuthedUI(true);
+    renderSlotInputs();
+    loadSettingsForms();
+  } else {
+    setAuthedUI(false);
+  }
+
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var password = document.getElementById('admin-password').value;
+    if (password === ADMIN_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      loginStatus.textContent = '';
+      setAuthedUI(true);
+      renderSlotInputs();
+      loadSettingsForms();
+      return;
+    }
+
+    loginStatus.textContent = 'Invalid password.';
+    loginStatus.className = 'admin-status error';
+  });
+
+  slotForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var savedSlots = readJSON(STORAGE_KEYS.slotConfig, {});
+
+    slotDates.forEach(function (dateStr) {
+      var remainingInput = slotForm.querySelector('[data-field="remaining"][data-date="' + dateStr + '"]');
+      var noteInput = slotForm.querySelector('[data-field="note"][data-date="' + dateStr + '"]');
+      var bookingUrlInput = slotForm.querySelector('[data-field="bookingUrl"][data-date="' + dateStr + '"]');
+
+      var remainingRaw = remainingInput ? remainingInput.value.trim() : '';
+      var note = noteInput ? noteInput.value.trim() : '';
+      var bookingUrl = bookingUrlInput ? bookingUrlInput.value.trim() : '';
+
+      if (!remainingRaw && !note && !bookingUrl) {
+        delete savedSlots[dateStr];
+        return;
+      }
+
+      var remaining = parseInt(remainingRaw, 10);
+      if (isNaN(remaining)) remaining = MAX_SLOTS;
+      remaining = Math.max(0, Math.min(MAX_SLOTS, remaining));
+
+      var entry = { remaining: remaining };
+      if (note) entry.note = note;
+      if (bookingUrl && isSafeHttpUrl(bookingUrl)) entry.bookingUrl = bookingUrl;
+      savedSlots[dateStr] = entry;
+    });
+
+    writeJSON(STORAGE_KEYS.slotConfig, savedSlots);
+    setSaveStatus('Slot settings saved.');
+    renderSlotInputs();
+  });
+
+  settingsForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var settings = {
+      facilityName: document.getElementById('setting-facility-name').value.trim() || DEFAULT_SITE_SETTINGS.facilityName,
+      logoMark: document.getElementById('setting-logo-mark').value.trim(),
+      contactEmail: document.getElementById('setting-contact-email').value.trim() || DEFAULT_SITE_SETTINGS.contactEmail,
+      contactPhone: document.getElementById('setting-contact-phone').value.trim() || DEFAULT_SITE_SETTINGS.contactPhone,
+      contactLocation: document.getElementById('setting-contact-location').value.trim() || DEFAULT_SITE_SETTINGS.contactLocation,
+      homeHeroTitle: document.getElementById('setting-home-title').value.trim() || DEFAULT_SITE_SETTINGS.homeHeroTitle,
+      homeHeroSubtitle: document.getElementById('setting-home-subtitle').value.trim() || DEFAULT_SITE_SETTINGS.homeHeroSubtitle
+    };
+
+    writeJSON(STORAGE_KEYS.siteSettings, settings);
+    applySiteSettings();
+    setSaveStatus('Site settings saved.');
+  });
+
+  announcementForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var message = document.getElementById('announcement-message').value.trim();
+    var type = document.getElementById('announcement-type').value;
+
+    if (!message) {
+      setSaveStatus('Announcement message cannot be empty.', 'error');
+      return;
+    }
+
+    writeJSON(STORAGE_KEYS.announcement, { message: message, type: type });
+    setSaveStatus('Announcement saved.');
+  });
+
+  clearAnnouncementBtn.addEventListener('click', function () {
+    localStorage.removeItem(STORAGE_KEYS.announcement);
+    document.getElementById('announcement-message').value = '';
+    document.getElementById('announcement-type').value = 'info';
+    setSaveStatus('Announcement cleared.');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', renderAvailability);

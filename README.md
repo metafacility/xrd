@@ -11,14 +11,16 @@ Static institutional website for the **X-Ray Diffractometer (XRD) Facility**, se
 | `learn.html` | Learn about XRD – X-ray basics, Bragg's law, sample prep, safety |
 | `data.html` | Data Interpretation – software, databases, phase ID guidance |
 | `contact.html` | Contact – office hours, contact info, mailto-based enquiry form |
+| `admin.html` | Admin panel foundation – local login gate, slot updates, notifications, site customization |
 | `assets/styles.css` | Shared CSS – light/dark theme, responsive layout |
-| `assets/main.js` | Shared JS – theme toggle, booking availability renderer |
+| `assets/main.js` | Shared JS – theme toggle, booking availability, announcements, admin storage logic |
 
 ## Features
 
 - **Light / Dark mode** – respects `prefers-color-scheme` and persists user choice in `localStorage`.
 - **Responsive layout** – works on mobile, tablet, and desktop.
 - **Booking availability** – dynamically shows the next two Wednesdays with slot counts and colour-coded indicators.
+- **Admin foundation** – browser-local admin panel to edit slot availability, publish notifications, and update basic site content.
 - **Accessible** – semantic HTML, skip-link, ARIA roles, visible focus states.
 
 ## Enabling GitHub Pages
@@ -75,3 +77,17 @@ Colour coding:
 - 🟢 **12–24** remaining → green
 - 🟡 **6–11** remaining → yellow
 - 🔴 **<6** remaining → red
+
+## Admin panel foundation
+
+The static admin page is available at `admin.html` and currently works as a **frontend foundation**:
+
+- Temporary browser-local login gate
+- Slot configuration editor (next 4 Wednesdays)
+- Public notification banner editor
+- Site customization fields (facility name, logo mark, contact summary, home banner text)
+
+Important limitations:
+- This is **not server-side authentication** and is not production-secure.
+- Changes are saved in the browser's `localStorage` and apply only on that browser/profile.
+- For multi-user or production operation, replace this with a backend-authenticated admin system.
