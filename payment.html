@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment & Results – XRD Facility</title>
+  <meta name="description" content="Submit payment details and access your XRD result download link." />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="assets/main.js"></script>
+</head>
+<body id="payment-page">
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <nav class="site-nav" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html">⚛ XRD Facility</a>
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="booking.html">Booking</a></li>
+        <li><a href="learn.html">Learn</a></li>
+        <li><a href="data.html">Data Interpretation</a></li>
+        <li><a href="payment.html">Payment &amp; Results</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="admin.html">Admin</a></li>
+      </ul>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
+        <span class="icon" aria-hidden="true">🌙</span>
+        <span class="label">Dark mode</span>
+      </button>
+      <button class="nav-hamburger" id="nav-hamburger" aria-controls="nav-links" aria-expanded="false" aria-label="Open navigation menu">☰</button>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <h1>Payment &amp; Results</h1>
+    <p>Upload payment proof via the payment form and then open your result download link.</p>
+  </header>
+
+  <main id="main-content" class="page-main">
+    <section class="section" aria-labelledby="payment-form-heading">
+      <h2 class="section-title" id="payment-form-heading">Step 1: Submit Payment Details</h2>
+      <p class="section-subtitle">Use the official payment form to submit your transaction and upload payment screenshot.</p>
+
+      <div class="admin-card">
+        <p class="admin-note">After submitting the form, return to this page and continue with Step 2.</p>
+        <a id="payment-form-link" class="btn btn-action" target="_blank" rel="noopener noreferrer" href="https://docs.google.com/forms/">Open Payment Form</a>
+        <p id="payment-form-status" class="admin-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="result-access-heading">
+      <h2 class="section-title" id="result-access-heading">Step 2: Access Your Result</h2>
+      <p class="section-subtitle">Enter your registered email or booking ID to get redirected to your Google Drive result file.</p>
+
+      <div class="admin-card">
+        <form id="result-access-form" class="admin-form">
+          <label for="result-identifier">Registered email or booking ID</label>
+          <input type="text" id="result-identifier" required placeholder="e.g., student@example.com or booking-2026-001" />
+          <button type="submit" class="btn btn-action">Open My Result</button>
+        </form>
+        <p id="result-access-status" class="admin-status" role="alert" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="footer-year"></span> <span data-site-name>XRD Facility</span>. All rights reserved. &nbsp;|&nbsp;
+      <a href="booking.html">Book a Slot</a> &nbsp;|&nbsp;
+      <a href="contact.html">Contact</a>
+    </p>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+  </footer>
+
+</body>
+</html>

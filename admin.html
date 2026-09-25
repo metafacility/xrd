@@ -20,6 +20,7 @@
         <li><a href="booking.html">Booking</a></li>
         <li><a href="learn.html">Learn</a></li>
         <li><a href="data.html">Data Interpretation</a></li>
+        <li><a href="payment.html">Payment &amp; Results</a></li>
         <li><a href="contact.html">Contact</a></li>
         <li><a href="admin.html">Admin</a></li>
       </ul>
@@ -108,6 +109,20 @@
           <input type="text" id="setting-contact-location" />
 
           <button type="submit" class="btn btn-action">Save site settings</button>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <h3>Payment Form &amp; Result Download Mapping</h3>
+        <form id="admin-payment-form" class="admin-form">
+          <label for="setting-payment-form-url">Google/Microsoft payment form URL</label>
+          <input type="url" id="setting-payment-form-url" placeholder="https://docs.google.com/forms/..." />
+
+          <label for="setting-result-links">Result mapping (one per line: identifier|result_url)</label>
+          <textarea id="setting-result-links" rows="8" placeholder="student1@example.com|https://drive.google.com/file/d/...\nbooking-2026-001|https://drive.google.com/file/d/..."></textarea>
+
+          <p class="admin-note">Use the same identifier students enter on the payment/results page (email or booking ID).</p>
+          <button type="submit" class="btn btn-action">Save payment and result settings</button>
         </form>
       </div>
 

@@ -54,7 +54,9 @@
 var STORAGE_KEYS = {
   slotConfig: 'xrd-slot-config',
   siteSettings: 'xrd-site-settings',
-  announcement: 'xrd-announcement'
+  announcement: 'xrd-announcement',
+  paymentConfig: 'xrd-payment-config',
+  resultLinks: 'xrd-result-links'
 };
 
 var DEFAULT_SITE_SETTINGS = {
@@ -65,6 +67,10 @@ var DEFAULT_SITE_SETTINGS = {
   contactLocation: 'Department of [Department Name], [Institution Name]',
   homeHeroTitle: 'X-Ray Diffractometer (XRD) Facility',
   homeHeroSubtitle: 'A shared analytical facility providing high-quality powder X-ray diffraction services for research and industry.'
+};
+
+var DEFAULT_PAYMENT_CONFIG = {
+  paymentFormUrl: 'https://docs.google.com/forms/'
 };
 
 function readJSON(key, fallback) {
@@ -103,6 +109,15 @@ function isSafeHttpUrl(url) {
 function getSiteSettings() {
   var saved = readJSON(STORAGE_KEYS.siteSettings, {});
   return Object.assign({}, DEFAULT_SITE_SETTINGS, saved);
+}
+
+function getPaymentConfig() {
+  var saved = readJSON(STORAGE_KEYS.paymentConfig, {});
+  return Object.assign({}, DEFAULT_PAYMENT_CONFIG, saved);
+}
+
+function getResultLinks() {
+  return readJSON(STORAGE_KEYS.resultLinks, {});
 }
 
 function applySiteSettings() {
@@ -187,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
   applySiteSettings();
   renderAnnouncementBanner();
   initAdminPanel();
+  initPaymentPage();
 });
 
 // ── Booking availability ───────────────────────────────────────
@@ -346,6 +362,7 @@ function initAdminPanel() {
   var settingsForm = document.getElementById('admin-settings-form');
   var announcementForm = document.getElementById('admin-announcement-form');
   var clearAnnouncementBtn = document.getElementById('clear-announcement-btn');
+  var paymentForm = document.getElementById('admin-payment-form');
 
   var slotDates = getNextWednesdays(4);
 
@@ -400,6 +417,15 @@ function initAdminPanel() {
     var announcement = getAnnouncement();
     document.getElementById('announcement-message').value = announcement ? announcement.message : '';
     document.getElementById('announcement-type').value = announcement ? announcement.type : 'info';
+
+    var paymentConfig = getPaymentConfig();
+    document.getElementById('setting-payment-form-url').value = paymentConfig.paymentFormUrl || '';
+
+    var resultLinks = getResultLinks();
+    var rows = Object.keys(resultLinks).map(function (identifier) {
+      return identifier + '|' + resultLinks[identifier];
+    });
+    document.getElementById('setting-result-links').value = rows.join('\n');
   }
 
   function setSaveStatus(message, type) {
@@ -500,6 +526,102 @@ function initAdminPanel() {
     document.getElementById('announcement-message').value = '';
     document.getElementById('announcement-type').value = 'info';
     setSaveStatus('Announcement cleared.');
+  });
+
+  paymentForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var paymentFormUrl = document.getElementById('setting-payment-form-url').value.trim();
+    var mappingsRaw = document.getElementById('setting-result-links').value;
+    var resultLinks = {};
+    var invalidLines = 0;
+
+    mappingsRaw.split('\n').forEach(function (line) {
+      var trimmed = line.trim();
+      if (!trimmed) return;
+
+      var parts = trimmed.split('|');
+      if (parts.length < 2) {
+        invalidLines += 1;
+        return;
+      }
+
+      var identifier = parts[0].trim().toLowerCase();
+      var resultUrl = parts.slice(1).join('|').trim();
+
+      if (!identifier || !isSafeHttpUrl(resultUrl)) {
+        invalidLines += 1;
+        return;
+      }
+
+      resultLinks[identifier] = resultUrl;
+    });
+
+    if (paymentFormUrl && !isSafeHttpUrl(paymentFormUrl)) {
+      setSaveStatus('Payment form URL must be a valid http/https link.', 'error');
+      return;
+    }
+
+    writeJSON(STORAGE_KEYS.paymentConfig, {
+      paymentFormUrl: paymentFormUrl || DEFAULT_PAYMENT_CONFIG.paymentFormUrl
+    });
+    writeJSON(STORAGE_KEYS.resultLinks, resultLinks);
+
+    if (invalidLines > 0) {
+      setSaveStatus('Saved with ' + invalidLines + ' invalid mapping line(s) ignored.', 'error');
+      return;
+    }
+    setSaveStatus('Payment and result settings saved.');
+  });
+}
+
+function initPaymentPage() {
+  var page = document.getElementById('payment-page');
+  if (!page) return;
+
+  var paymentFormLink = document.getElementById('payment-form-link');
+  var paymentFormStatus = document.getElementById('payment-form-status');
+  var resultForm = document.getElementById('result-access-form');
+  var resultStatus = document.getElementById('result-access-status');
+
+  var paymentConfig = getPaymentConfig();
+  var paymentFormUrl = paymentConfig.paymentFormUrl;
+
+  if (paymentFormLink) {
+    if (paymentFormUrl && isSafeHttpUrl(paymentFormUrl)) {
+      paymentFormLink.href = paymentFormUrl;
+      paymentFormLink.classList.remove('btn-disabled');
+      paymentFormLink.removeAttribute('aria-disabled');
+    } else {
+      paymentFormLink.removeAttribute('href');
+      paymentFormLink.classList.add('btn-disabled');
+      paymentFormLink.setAttribute('aria-disabled', 'true');
+      if (paymentFormStatus) paymentFormStatus.textContent = 'Payment form link is not configured yet. Please contact the facility.';
+    }
+  }
+
+  resultForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var identifierInput = document.getElementById('result-identifier');
+    var identifier = identifierInput.value.trim().toLowerCase();
+    var resultLinks = getResultLinks();
+
+    if (!identifier) {
+      resultStatus.textContent = 'Please enter your registered email or booking identifier.';
+      resultStatus.className = 'admin-status error';
+      return;
+    }
+
+    var resultUrl = resultLinks[identifier];
+    if (!resultUrl || !isSafeHttpUrl(resultUrl)) {
+      resultStatus.textContent = 'Result not found for this identifier. Please contact the facility team.';
+      resultStatus.className = 'admin-status error';
+      return;
+    }
+
+    resultStatus.textContent = 'Redirecting to your result download...';
+    resultStatus.className = 'admin-status';
+    window.location.href = resultUrl;
   });
 }
 

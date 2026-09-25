@@ -10,6 +10,7 @@ Static institutional website for the **X-Ray Diffractometer (XRD) Facility**, se
 | `booking.html` | Booking – slot availability, pricing table, MS Forms link |
 | `learn.html` | Learn about XRD – X-ray basics, Bragg's law, sample prep, safety |
 | `data.html` | Data Interpretation – software, databases, phase ID guidance |
+| `payment.html` | Payment & Results – payment form handoff and result-download redirect |
 | `contact.html` | Contact – office hours, contact info, mailto-based enquiry form |
 | `admin.html` | Admin panel foundation – local login gate, slot updates, notifications, site customization |
 | `assets/styles.css` | Shared CSS – light/dark theme, responsive layout |
@@ -21,6 +22,7 @@ Static institutional website for the **X-Ray Diffractometer (XRD) Facility**, se
 - **Responsive layout** – works on mobile, tablet, and desktop.
 - **Booking availability** – dynamically shows the next two Wednesdays with slot counts and colour-coded indicators.
 - **Admin foundation** – browser-local admin panel to edit slot availability, publish notifications, and update basic site content.
+- **Payment & results flow foundation** – students open configured payment form and then use identifier-based redirect to their result URL.
 - **Accessible** – semantic HTML, skip-link, ARIA roles, visible focus states.
 
 ## Enabling GitHub Pages
@@ -86,8 +88,21 @@ The static admin page is available at `admin.html` and currently works as a **fr
 - Slot configuration editor (next 4 Wednesdays)
 - Public notification banner editor
 - Site customization fields (facility name, logo mark, contact summary, home banner text)
+- Payment form URL configuration
+- Result URL mapping using `identifier|result_url` lines (identifier can be email or booking ID)
 
 Important limitations:
 - This is **not server-side authentication** and is not production-secure.
 - Changes are saved in the browser's `localStorage` and apply only on that browser/profile.
 - For multi-user or production operation, replace this with a backend-authenticated admin system.
+
+## Payment and results usage
+
+1. Open `admin.html` and log in.
+2. In **Payment Form & Result Download Mapping**:
+   - Set your Google/Microsoft payment form URL (the external form should collect payment screenshot uploads).
+   - Add mappings in this format (one per line):  
+     `student@example.com|https://drive.google.com/file/d/...`
+3. Students visit `payment.html`:
+   - Step 1 opens the configured payment form.
+   - Step 2 asks for their identifier (email or booking ID) and redirects to the mapped result URL.
