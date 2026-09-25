@@ -77,9 +77,16 @@ document.addEventListener('DOMContentLoaded', function () {
  * Key format: "YYYY-MM-DD" (the Wednesday's date in local time).
  * If a date is not listed, capacity defaults to MAX_SLOTS (24).
  *
- * Example:
- *   "2025-04-02": 18,   // 18 remaining
- *   "2025-04-09": 3,    // only 3 left → red
+ * Supported formats:
+ * 1) Number (backward compatible):
+ *    "2025-04-02": 18
+ *
+ * 2) Object (recommended):
+ *    "2025-04-09": {
+ *      remaining: 0,
+ *      bookingUrl: "https://forms.office.com/your-link",
+ *      note: "Fully booked"
+ *    }
  */
 var SLOT_CONFIG = {
   // ↓ Add or update entries here when slot counts change ↓
@@ -116,6 +123,32 @@ function slotColor(remaining) {
   return 'red';
 }
 
+function getSlotDetails(dateStr) {
+  var config = SLOT_CONFIG[dateStr];
+  var remaining = MAX_SLOTS;
+  var bookingUrl = MS_FORMS_LINK;
+  var note = '';
+
+  if (typeof config === 'number') {
+    remaining = config;
+  } else if (config && typeof config === 'object') {
+    if (typeof config.remaining === 'number') remaining = config.remaining;
+    if (typeof config.bookingUrl === 'string' && config.bookingUrl.trim()) bookingUrl = config.bookingUrl.trim();
+    if (typeof config.note === 'string' && config.note.trim()) note = config.note.trim();
+  }
+
+  remaining = Math.max(0, Math.min(MAX_SLOTS, remaining));
+  var hasValidFormLink = bookingUrl && bookingUrl.indexOf('your-form-link') === -1;
+  var bookingOpen = remaining > 0 && hasValidFormLink;
+
+  return {
+    remaining: remaining,
+    bookingUrl: bookingUrl,
+    note: note,
+    bookingOpen: bookingOpen
+  };
+}
+
 /**
  * Formats "YYYY-MM-DD" → "Wednesday, DD Month YYYY"
  */
@@ -145,12 +178,11 @@ function renderAvailability() {
   var html = '';
 
   wednesdays.forEach(function (dateStr) {
-    var remaining = (SLOT_CONFIG[dateStr] !== undefined) ? SLOT_CONFIG[dateStr] : MAX_SLOTS;
-    remaining = Math.max(0, Math.min(MAX_SLOTS, remaining));
+    var slot = getSlotDetails(dateStr);
+    var remaining = slot.remaining;
     var color = slotColor(remaining);
     var pct   = Math.round((remaining / MAX_SLOTS) * 100);
-    var statusText = color === 'green' ? 'Available' : color === 'yellow' ? 'Filling up' : 'Almost full';
-    var bookUrl = MS_FORMS_LINK;
+    var statusText = remaining === 0 ? 'Fully booked' : color === 'green' ? 'Available' : color === 'yellow' ? 'Filling up' : 'Almost full';
 
     html += '<div class="slot-card">';
     html += '  <div class="slot-card-date">' + formatDate(dateStr) + '</div>';
@@ -160,7 +192,14 @@ function renderAvailability() {
     html += '  </div>';
     html += '  <div class="slot-bar-track"><div class="slot-bar-fill ' + color + '" style="width:' + pct + '%" role="progressbar" aria-valuenow="' + remaining + '" aria-valuemin="0" aria-valuemax="' + MAX_SLOTS + '"></div></div>';
     html += '  <div class="slot-count">' + remaining + ' of ' + MAX_SLOTS + ' slots remaining</div>';
-    html += '  <a href="' + bookUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-action btn-sm">Book now →</a>';
+    if (slot.note) {
+      html += '  <div class="slot-note">' + slot.note + '</div>';
+    }
+    if (slot.bookingOpen) {
+      html += '  <a href="' + slot.bookingUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-action btn-sm">Book now →</a>';
+    } else {
+      html += '  <span class="btn btn-disabled btn-sm" aria-disabled="true">Booking closed</span>';
+    }
     html += '</div>';
   });
 

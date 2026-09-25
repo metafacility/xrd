@@ -55,13 +55,21 @@ Slot counts for upcoming Wednesdays can be set in `assets/main.js`:
 
 ```js
 var SLOT_CONFIG = {
-  // Key: "YYYY-MM-DD" (Wednesday date), Value: remaining slots
+  // Key: "YYYY-MM-DD" (Wednesday date)
+  // Simple format (backward compatible): remaining slots as a number
   "2025-04-02": 18,
-  "2025-04-09": 3,
+
+  // Recommended format: object with remaining slots + optional per-date form URL + note
+  "2025-04-09": {
+    remaining: 0,
+    bookingUrl: "https://forms.office.com/your-form-link",
+    note: "Fully booked"
+  }
 };
 ```
 
 If a date is not listed, it defaults to **24 slots** (fully available).
+If `remaining` is `0`, the booking button is automatically replaced with **Booking closed** for that date.
 
 Colour coding:
 - 🟢 **12–24** remaining → green
